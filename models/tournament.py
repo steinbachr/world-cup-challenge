@@ -48,3 +48,14 @@ class Tournament(WCModel):
     model entry point
     """
     fields = ['stages']
+
+    def run(self):
+        # populate team information
+
+
+        # populate player information
+        test = ''
+
+        # populate stage information
+
+        # populate game information
