@@ -23,6 +23,9 @@ class Team(WCModel):
     def _plays_well_in_bad_weather(self):
         pass
 
+    def _plays_well_at_night(self):
+        pass
+
     def _team_skill_score(self):
         pass
 

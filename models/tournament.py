@@ -3,7 +3,7 @@ import math
 
 
 class Game(WCModel):
-    fields = ['team1', 'team2', 'stage']
+    fields = ['team1', 'team2', 'stage', 'time']
 
     def _better_fans(self):
         """
