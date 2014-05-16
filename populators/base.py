@@ -1,41 +1,56 @@
 from bs4 import BeautifulSoup
 from lxml import etree
 import requests
+import pdb
 
 
 class XPathOps():
-    def __init__(self, url):
+    def __init__(self, url, xpath='', **kwargs):
         self.url = url
+        self.xpath = xpath
+        self.css_class_root = kwargs.pop('css_class_root', None)
 
-    def get_val_at_xpath(self, xpath=''):
+        self.html = None
+
+    def _get_xpath_target(self):
         """
-        :param xpath: the xpath to use for selecting an iterable we can use to create the rows of data we'll eventually
-        use for creating model instances. Note: when this xpath is applied to the element tree, it should return a list
+        :return: result of applying ``xpath`` to the content of self.url
         """
-        resp = requests.get(self.url)
-        soup = BeautifulSoup(resp.content, "lxml")
-        html = soup
+        if not self.html:
+            resp = requests.get(self.url)
+            soup = BeautifulSoup(resp.content, "lxml")
+            self.html = soup.find(class_=self.css_class_root)
 
-        root = etree.fromstring(html.prettify())
-        xpath = etree.XPath(xpath)
-        target_nodes = xpath(root)
+        root = etree.fromstring(self.html.prettify())
+        xpath = etree.XPath(self.xpath)
+        return xpath(root)
 
-        for row in target_nodes:
-            creation_dict = static_fields
-            for field_name, xpath_to_field in field_mapping.items():
-                col_el = row.find(xpath_to_field)
-                col_val = BeautifulSoup(etree.tostring(col_el)).get_text(strip=True)
-                creation_dict[field_name] = col_val
-                # if a parse function exists for this field, then apply the parse function with the column value
-                if parse_functions and parse_functions.get(field_name):
-                    creation_dict[field_name] = parse_functions[field_name](col_val)
+    def get_val_at_xpath(self):
+        target_list = self._get_xpath_target()
+        if target_list:
+            target = target_list[0]
+            return self.get_val_from_node(target)
+        else:
+            return None
 
-        return True
-
-    def get_nodes_at_xpath(self, xpath=''):
+    def get_nodes_at_xpath(self):
         """
-        :param xpath: ``str`` the path to retrieve lxml nodes from
-
         :return: ``list`` of lxml nodes at the specified xpath
         """
-        pass
+        nodes = list(self._get_xpath_target())
+        return nodes
+
+    def get_val_from_node(self, node):
+        """
+        :param node: ``lxml`` node
+        :return: ``str`` the text in the passed node
+        """
+        return BeautifulSoup(etree.tostring(node)).get_text(strip=True)
+
+    def change_xpath(self, new_xpath):
+        """
+        :param new_xpath: ``str`` new xpath to use for xpath operations
+        :return: self for chaining purposes
+        """
+        self.xpath = new_xpath
+        return self

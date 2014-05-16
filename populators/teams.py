@@ -4,6 +4,9 @@ class TeamsPopulator():
              'Portugal', 'Russia', 'Spain', 'Switzerland', 'Costa Rica', 'Honduras', 'Mexico', 'USA', 'Argentina',
              'Brazil', 'Chile', 'Colombia', 'Ecuador', 'Uruguay']
 
+    def __init__(self):
+        pass
+
     @classmethod
-    def get_fifa_rank(cls):
+    def get_fifa_rank(cls, team):
         pass

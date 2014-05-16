@@ -1,5 +1,8 @@
 from models.base import WCModel
+from models.team import Team
+from populators.teams import TeamsPopulator
 import math
+import pdb
 
 
 class Game(WCModel):
@@ -21,6 +24,12 @@ class Game(WCModel):
         """
         :return: ``int`` between 1 - 10 (inclusive) which represents how much pressure this game will probably have
         for the teams
+        """
+        pass
+
+    def _is_night_game(self):
+        """
+        :return: ``True`` if it this is a night game, ``False`` otherwise
         """
         pass
 
@@ -47,15 +56,32 @@ class Tournament(WCModel):
     """
     model entry point
     """
-    fields = ['stages']
+    @staticmethod
+    def _populate_detailed_info():
+        """
+        This method populates the more detailed info for elements of the tournament (i.e. for teams, it fills in the
+        fifa rank for all teams)
+        """
+        pass
 
-    def run(self):
+    @staticmethod
+    def _populate_basic_info():
+        """
+        this method populates basic info for tournament elemenents (i.e. for teams, it fills out the teams country)
+        """
+        stages = [Stage(number=i, teams=[], games=[]) for i in range(1, 6)]
+
         # populate team information
-
+        countries = TeamsPopulator.teams
+        first_stage = stages[0]
+        for country in countries:
+            first_stage.teams.append(Team(country=country))
 
         # populate player information
         test = ''
-
-        # populate stage information
-
         # populate game information
+
+    @staticmethod
+    def run():
+        Tournament._populate_basic_info()
+
