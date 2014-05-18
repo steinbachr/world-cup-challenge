@@ -1,4 +1,4 @@
-from populators.base import XPathOps
+from populators.populator_ops import XPathOps
 from models.team import Player, Team
 import requests
 import pdb
@@ -11,7 +11,7 @@ class PlayersPopulator():
         pass
 
     @classmethod
-    def create_players(cls, teams):
+    def populate(cls, teams):
         """
         :param teams: ``list`` of ``Team`` instances to create player information for
         :return: ``list`` the ``teams`` with player information added
@@ -19,7 +19,7 @@ class PlayersPopulator():
         pages = 3
         #pages = 212
         for page in range(1, pages):
-            ops = XPathOps('{base}?sort=overall_rating&order=d&page={page}'.format(base=cls.url, page=page),
+            ops = XPathOps(url='{base}?sort=overall_rating&order=d&page={page}'.format(base=cls.url, page=page),
                            xpath='//tr',
                            css_class_root='players')
             table_rows = ops.get_nodes_at_xpath()
@@ -33,7 +33,7 @@ class PlayersPopulator():
 
                 team = Team.get_for_country(teams, country)
                 if team:
-                    team.players.append(Player(name=name, age=age, skill_rank=skill_rank))
-
+                    new_player = Player(name=name, age=age, skill_rank=skill_rank)
+                    team.players = team.players + [new_player] if team.players is not None else [new_player]
         return teams
 

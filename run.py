@@ -1,3 +1,3 @@
 from models.tournament import Tournament
 
-Tournament.run()
+Tournament().run()
