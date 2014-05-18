@@ -1,12 +1,38 @@
 from models.base import WCModel
+import math
+import random
 
 
 class Player(WCModel):
-    fields = ['name', 'number', 'age', 'number_yellows', 'number_reds', 'skill_rank', 'is_star', 'is_captain',
-              'is_injured']
+    fields = ['name', 'number', 'age', 'skill_rank', 'is_star', 'is_captain', 'is_injured']
 
-    def _is_injury_prone(self):
-        pass
+    def _will_be_injured(self):
+        """
+        :return: ``True`` if this player will be injured over the course of the cup, ``False`` otherwise
+
+        Of course this expects a level of innaccuracy and postulation, but the factors we'll use to determine if this
+        player will be injured are:
+        * age
+        * star rating
+        * and whether they're a captain
+
+        If they have is_injured = True, then of course True will be returned
+        """
+        # this injury threshold is being used as it represents the injury rating of 1/2 of a non-star, 35-year old. So,
+        # this means that this player would have a 50% chance at being injured, which sounds reasonable
+        INJURY_THRESHOLD = 25
+        star_boost = 2 if self.is_star else 1
+        years_since_28 = self.age - 28
+
+        age_factor = 1
+        if years_since_28 > 0:
+            age_factor = math.pow(years_since_28, 2)
+
+        injury_rating = age_factor * star_boost
+        will_be_injured = random.randint(0, injury_rating) > INJURY_THRESHOLD
+
+        return self.is_injured or will_be_injured
+
 
     def _is_clutch(self):
         pass
@@ -24,17 +50,19 @@ class Team(WCModel):
         """
         pass
 
-    def _plays_well_in_bad_weather(self):
+    def _plays_better_in_bad_weather(self):
         """
-        :return:
+        :return: ``True`` if this team plays better in rainy weather relative to their clear day performances.
+        (meaning they're win % is as high or higher when playing in bad weather as opposed to clear weather). If
+        they play better with good weather, return ``False``
         """
         pass
 
-    def _plays_well_at_night(self):
+    def _plays_better_at_night(self):
         """
-        :return: ``int`` > 0 the scoring value for being a team that plays well at night (defined as after 6PM)
-        relative to their day performance. (meaning they're win % is as high or higher when playing at night as
-        opposed to during the day). If they play better during the day, return 0
+        :return: ``True`` if this team plays better at night (defined as after 6PM) relative to their day performances.
+        (meaning they're win % is as high or higher when playing at night as opposed to during the day). If
+        they play better during the day, return ``False``
         """
         pass
 

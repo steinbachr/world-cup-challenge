@@ -15,12 +15,6 @@ class Game(WCModel):
     TIE, WIN = 1, 3
     fields = ['team1', 'team2', 'time', 'stadium']
 
-    def _better_fans(self):
-        """
-        :return: the Team instance which has better fans
-        """
-        pass
-
     def _underdog(self):
         """
         :return: ``Team`` instance which is an underdog in the match
@@ -28,7 +22,7 @@ class Game(WCModel):
         This code currently just uses FIFA rank as its metric for underdog, and so could be improved by accounting for
         more factors
         """
-        pass
+        return self.team1 if self.team1.fifa_rank < self.team2.fifa_rank else self.team2
 
     def _expected_weather(self):
         """
