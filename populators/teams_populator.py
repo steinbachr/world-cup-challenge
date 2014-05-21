@@ -2,11 +2,14 @@ from models.team import Team
 
 
 class TeamsPopulator():
-    teams = ['Algeria', 'Cameroon', "Cote d'lvoire", 'Ghana', 'Nigeria', 'Australia', 'Iran', 'Japan', 'Korea Republic',
-             'Belgium', 'Bosnia and Herzegovina', 'Croatia', 'England', 'France', 'Germany', 'Greece', 'Italy', 'Netherlands',
-             'Portugal', 'Russia', 'Spain', 'Switzerland', 'Costa Rica', 'Honduras', 'Mexico', 'USA', 'Argentina',
-             'Brazil', 'Chile', 'Colombia', 'Ecuador', 'Uruguay']
-    groups = [(), (), ()]
+    teams = [('Brazil', 'A'), ('Croatia', 'A'), ('Mexico', 'A'), ('Cameroon', 'A'),
+             ('Spain', 'B'), ('Netherlands', 'B'), ('Chile', 'B'), ('Australia', 'B'),
+             ('Colombia', 'C'), ('Greece', 'C'), ('Cote d\'Ivoire', 'C'), ('Japan', 'C'),
+             ('Uruguay', 'D'), ('Costa Rica', 'D'), ('England', 'D'), ('Italy', 'D'),
+             ('Switzerland', 'E'), ('Ecuador', 'E'), ('France', 'E'), ('Honduras', 'E'),
+             ('Argentina', 'F'), ('Bosnia-Herzegovina', 'F'), ('Iran', 'F'), ('Nigeria', 'F'),
+             ('Germany', 'G'), ('Portugal', 'G'), ('Ghana', 'G'), ('United States', 'G'),
+             ('Belgium', 'H'), ('Algeria', 'H'), ('Russia', 'H'), ('South Korea', 'H')]
 
     def __init__(self):
         pass
@@ -17,9 +20,8 @@ class TeamsPopulator():
 
     @classmethod
     def populate(cls):
-        countries = cls.teams
         teams = []
-        for country in countries:
-            teams.append(Team(country=country))
+        for country, group in cls.teams:
+            teams.append(Team(group=group, country=country))
 
         return teams
