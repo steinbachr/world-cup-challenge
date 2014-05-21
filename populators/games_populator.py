@@ -3,6 +3,9 @@ import pdb
 
 
 class GamesPopulator():
+    """
+    The ``GamePopulator`` populates the group matchups
+    """
     def __init__(self):
         pass
 
@@ -21,4 +24,3 @@ class GamesPopulator():
             team_xpath = './mu-m/{teamx}'.format(teamx=XPathOps.classlist_contains('t'))
             for match in matches:
                 teams = ops.get_nodes_at_xpath(from_node=match, xpath=team_xpath)
-                pdb.set_trace()

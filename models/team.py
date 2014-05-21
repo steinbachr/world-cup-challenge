@@ -42,7 +42,7 @@ class Player(WCModel):
 
 
 class Team(WCModel):
-    fields = ['players', 'country', 'fifa_rank', 'fans_score']
+    fields = ['players', 'country', 'fifa_rank', 'fans_score', 'winning_probabilities']
 
     def _past_performances(self):
         """

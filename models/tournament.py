@@ -1,7 +1,7 @@
 from models.base import WCModel
 from models.team import Team
 from populators.teams_populator import TeamsPopulator
-from populators.stages_populator import StagesPopulator
+from populators.tournament_populator import TournamentPopulator
 import math
 import pdb
 
@@ -135,29 +135,13 @@ class Tournament(WCModel):
     """
     model entry point
     """
-    fields = ['teams', 'stages']
+    fields = ['teams', 'probable_winners_tree']
 
-    def _populate(self):
-        """
-        this method populates basic info for tournament elemenents (i.e. for teams, it fills out the teams country)
-        """
+    def __init__(self):
+        WCModel.__init__(self)
         self.teams = TeamsPopulator.populate()
-        self.stages = StagesPopulator.populate()
-
-    def _simulate(self):
-        """
-        this method simulates the actual running of the games now that instance data has been created. The way tournament
-        data flows is as follows:
-
-        1. Run the games in a stage, this will return a list of teams that should advance to the next stage.
-        2. Feed this data to the next stage and repeat
-        """
-        winning_teams = []
-        for stage in self.stages:
-            stage.games = stage.create_games(winning_teams) if winning_teams else stage.games
-            winning_teams = stage.run_games()
+        TournamentPopulator(self).populate()
 
     def run(self):
-        self._populate()
-        self._simulate()
+        pass
 
