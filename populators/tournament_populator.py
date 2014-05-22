@@ -97,5 +97,5 @@ class TournamentPopulator():
         self.tournament = tournament
 
     def populate(self):
-        self.tournament.teams = TeamsPopulator.populate()
+        TeamsPopulator(self.tournament).populate()
         self.tournament.group_distribution_tree = self.GroupDistributionTree()

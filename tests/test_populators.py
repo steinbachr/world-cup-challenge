@@ -28,25 +28,22 @@ class TestTournamentPopulator(unittest.TestCase):
         self.assertEqual(gdt.get_opponents_group_at_stage(test_team, 2), 'EFGH')
 
 
+class TestPlayersPopulator(unittest.TestCase):
+    def setUp(self):
+        self.tournament = Tournament()
+        TournamentPopulator(self.tournament).populate()
+        self.teams = self.tournament.teams
+        Team.get_for_country(self.teams, 'USA')
 
+    def test_populate(self):
+        first_team = self.teams[0]
+        self.assertIsNotNone(first_team.players)
+        self.assertGreater(len(first_team.players), 0)
 
-#class TestPlayersPopulator(unittest.TestCase):
-#    def setUp(self):
-#        countries = TeamsPopulator.teams
-#        self.teams = [Team(country=c) for c in countries]
-#        self.usa = [t for t in self.teams if t.country == 'USA'][0]
-#
-#    def test_populate(self):
-#        first_team = self.teams[0]
-#        self.assertIsNone(first_team.players)
-#
-#        PlayersPopulator.populate(self.teams)
-#        self.assertGreater(len(first_team.players), 0)
-#
-#        dempsey = [p for p in self.usa if p.name.lower() == 'dempsey']
-#        self.assertGreater(len(dempsey), 0)
-#        self.assertEqual(dempsey.age, 30)
-#        self.assertEqual(dempsey.skill_rank, 85)
+        dempsey = [p for p in self.usa if p.name.lower() == 'dempsey']
+        self.assertGreater(len(dempsey), 0)
+        self.assertEqual(dempsey.age, 30)
+        self.assertEqual(dempsey.skill_rank, 85)
 
 
 if __name__ == '__main__':

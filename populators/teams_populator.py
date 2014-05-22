@@ -16,27 +16,22 @@ class TeamsPopulator():
              ('Germany', 'G'), ('Portugal', 'G'), ('Ghana', 'G'), ('United States', 'G'),
              ('Belgium', 'H'), ('Algeria', 'H'), ('Russia', 'H'), ('South Korea', 'H')]
 
-    def __init__(self):
+    def __init__(self, tournament):
+        self.tournament = tournament
+
+    def _get_fifa_rank(self, team):
         pass
 
-    @classmethod
-    def _get_fifa_rank(cls, team):
-        pass
+    def populate(self):
+        for country, group in self.teams:
+            self.tournament.teams.append(Team(group=group, country=country))
 
-    @classmethod
-    def populate(cls):
-        teams = []
-        for country, group in cls.teams:
-            teams.append(Team(group=group, country=country))
+        PlayersPopulator.populate(self.tournament)
 
-        #PlayersPopulator.populate(teams)
-
-        for team in teams:
+        for team in self.tournament.teams:
             team.winning_probabilities = {}
-            for other_team in teams:
+            for other_team in self.tournament.teams:
                 # only set winning probablities against team that isn't self
                 if team.country != other_team.country:
                     #TODO: implement the winning probability function
                     team.winning_probabilities[other_team.country] = 1
-
-        return teams
