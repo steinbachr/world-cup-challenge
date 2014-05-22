@@ -127,3 +127,38 @@ class Team(WCModel):
                 return team
 
         return None
+
+    @classmethod
+    def get_for_group(cls, teams, group):
+        """
+        :param teams: ``list`` of ``Team`` instances
+        :param group: ``str`` the group letter to get team instances belonging to
+        :return: ``list`` of team instances belonging to the given group
+        """
+        matching_group = []
+        for team in teams:
+            if team.group == group:
+                matching_group.append(team)
+
+        return matching_group
+
+    @classmethod
+    def get_best_team(cls, teams):
+        """
+        :param teams: ``list`` of ``Team`` instances to choose the best team from
+        :return: ``Team`` team instance with the highest probability to beat other teams in ``teams``
+        """
+        best_team = None
+        winning_prob_high = 0
+        for team in teams:
+            winning_prob_total = 0
+            for competitor in teams:
+                if competitor.country != team.country:
+                    winning_prob_total += team.winning_probabilities[competitor.country]
+
+            if winning_prob_total > winning_prob_high:
+                best_team = team
+                winning_prob_high = winning_prob_total
+
+        return best_team
+

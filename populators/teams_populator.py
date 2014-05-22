@@ -1,7 +1,12 @@
+from populators.players_populator import PlayersPopulator
 from models.team import Team
 
 
 class TeamsPopulator():
+    """
+    For each team that is created, set their independent winning probabilities (winning_probabilities)
+    against every other team in the tournament.
+    """
     teams = [('Brazil', 'A'), ('Croatia', 'A'), ('Mexico', 'A'), ('Cameroon', 'A'),
              ('Spain', 'B'), ('Netherlands', 'B'), ('Chile', 'B'), ('Australia', 'B'),
              ('Colombia', 'C'), ('Greece', 'C'), ('Cote d\'Ivoire', 'C'), ('Japan', 'C'),
@@ -23,5 +28,15 @@ class TeamsPopulator():
         teams = []
         for country, group in cls.teams:
             teams.append(Team(group=group, country=country))
+
+        #PlayersPopulator.populate(teams)
+
+        for team in teams:
+            team.winning_probabilities = {}
+            for other_team in teams:
+                # only set winning probablities against team that isn't self
+                if team.country != other_team.country:
+                    #TODO: implement the winning probability function
+                    team.winning_probabilities[other_team.country] = 1
 
         return teams

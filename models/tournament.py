@@ -14,8 +14,6 @@ class Tournament(WCModel):
 
     def __init__(self):
         WCModel.__init__(self)
-
-        self.teams = TeamsPopulator.populate()
         TournamentPopulator(self).populate()
 
     def run(self):

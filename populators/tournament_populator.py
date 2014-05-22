@@ -1,12 +1,11 @@
+from populators.teams_populator import TeamsPopulator
 import pdb
 
 
 class TournamentPopulator():
     """
-    The steps for populating a tournament are as follows:
-    1. For each team, set their independent winning probabilities (winning_probabilities) against every other team in
-    the tournament.
-    2. Create a tree detailing which groups play which groups at the various stages of the tournament
+    The group distribution tree is the tricky part of this class and basically just details
+    which groups play which groups at the various stages of the tournament
     """
     class GroupDistributionTree():
         MAX_LEVEL = 3
@@ -52,15 +51,16 @@ class TournamentPopulator():
         def get_opponents_group_at_stage(self, team, stage):
             """
             :param team: ``Team`` instance to get the probable opponent for
-            :param stage: ``int`` the stage to get the probable opponent for ``team`` at.
+            :param stage: ``int`` the stage to get the probable opponent for ``team`` at. (Stage should always be between
+            0 inclusive and 3 exclusive)
             :return: ``str`` group letter (or combination of letters) which represent the group (or combination of groups)
             that ``team`` will be playing at ``stage``
             """
             def _helper(node, cur_level=self.MAX_LEVEL):
-                next_level = cur_level - 1
-                if next_level < 0:
+                deeper_level = cur_level - 1
+                if deeper_level < 0:
                     return None
-                elif next_level == stage:
+                elif deeper_level == stage:
                     # if the next level is the one that we're looking for, then get the child node which
                     # represents the group of ``team``'s sibling (which is the teams opponent)
                     if team.group in node.left.val:
@@ -68,7 +68,8 @@ class TournamentPopulator():
                     else:
                         return node.left.val
                 else:
-                    return _helper(node.left, cur_level=next_level) or _helper(node.right, cur_level=next_level)
+                    return _helper(node.left, cur_level=deeper_level) or _helper(node.right, cur_level=deeper_level)
+            return _helper(self.root)
 
         def print_tree(self):
             """
@@ -96,12 +97,5 @@ class TournamentPopulator():
         self.tournament = tournament
 
     def populate(self):
-        for team in self.tournament.teams:
-            team.winning_probabilities = {}
-            for other_team in self.tournament.teams:
-                # only set winning probablities against team that isn't self
-                if team.country != other_team.country:
-                    #TODO: implement the winning probability function
-                    team.winning_probabilities[other_team.country] = 1
-
+        self.tournament.teams = TeamsPopulator.populate()
         self.tournament.group_distribution_tree = self.GroupDistributionTree()
