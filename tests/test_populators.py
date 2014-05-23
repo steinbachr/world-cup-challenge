@@ -33,7 +33,8 @@ class TestPlayersPopulator(unittest.TestCase):
         self.tournament = Tournament()
         TournamentPopulator(self.tournament).populate()
         self.teams = self.tournament.teams
-        Team.get_for_country(self.teams, 'USA')
+        Team.get_for_country(self.teams, 'United States')
+
 
     def test_populate(self):
         first_team = self.teams[0]
