@@ -16,13 +16,13 @@ class PlayersPopulator():
         """
         create a csv file containing all the player data from the page at self.url
         """
-        pages = 3
-        #pages = 212
+        pages = 212
         with open(self.csv_path, 'wb') as csvfile:
             writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             # for each page of results, fetch the nodes from the page to use, then iterate over those nodes and write
             # the values to csv
             for page in range(1, pages):
+                print "Page ", page
                 ops = XPathOps(url='{base}?sort=overall_rating&order=d&page={page}'.format(base=self.url, page=page),
                                xpath='//tr',
                                css_class_root='players')
@@ -35,7 +35,9 @@ class PlayersPopulator():
                     age = ops.get_val_from_node(row[age_i])
                     skill_rank = ops.get_val_from_node(row[skill_i])
 
-                    writer.writerow([name, country, age, skill_rank])
+                    # write unless this is a header row
+                    if name != 'Player Name':
+                        writer.writerow([name.encode('utf8'), country.encode('utf8'), age, skill_rank])
 
     def _players_csv_exists(self):
         """

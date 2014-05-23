@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from lxml import etree
 import requests
 import pdb
+import time
 
 
 class XPathOps():
@@ -11,6 +12,14 @@ class XPathOps():
         self.css_class_root = kwargs.pop('css_class_root', None)
         if html:
             self.html = self._make_beautiful_soup(html)
+        else:
+            self.html = None
+            # just in case we get rate limited
+            while self.html is None:
+                self.html = self._make_beautiful_soup(self._get_html())
+                # if we got limited, don't immediately make the next request, sleep first
+                if self.html is None:
+                    time.sleep(15)
 
     def _apply_xpath_to_el(self, xpath, el):
         """
@@ -29,14 +38,17 @@ class XPathOps():
         soup = BeautifulSoup(html, "lxml")
         return soup.find(class_=self.css_class_root)
 
+    def _get_html(self):
+        """
+        :return: ``str`` html at self.url
+        """
+        resp = requests.get(self.url)
+        return resp.content
+
     def _get_xpath_target(self):
         """
         :return: result of applying ``xpath`` to the content of self.url
         """
-        if not self.html:
-            resp = requests.get(self.url)
-            self.html = self._make_beautiful_soup(resp.content)
-
         root = etree.fromstring(self.html.prettify())
         return self._apply_xpath_to_el(self.xpath, root)
 
@@ -54,8 +66,8 @@ class XPathOps():
         :param xpath: if given, use this xpath rather then self.xpath to find the node
         :return: ``list`` of lxml nodes at the specified xpath
         """
-        pdb.set_trace()
         root = from_node if from_node else etree.fromstring(self.html.prettify())
+        xpath = xpath if xpath else self.xpath
         nodes = list(self._apply_xpath_to_el(xpath, root))
         return nodes
 
@@ -66,6 +78,7 @@ class XPathOps():
         :return: ``lxml`` node at the specified xpath if given, else using self.xpath
         """
         root = from_node if from_node else etree.fromstring(self.html.prettify())
+        xpath = xpath if xpath else self.xpath
         return self._apply_xpath_to_el(xpath, root)
 
     def get_val_from_node(self, node):

@@ -32,19 +32,18 @@ class TestPlayersPopulator(unittest.TestCase):
     def setUp(self):
         self.tournament = Tournament()
         TournamentPopulator(self.tournament).populate()
-        self.teams = self.tournament.teams
-        Team.get_for_country(self.teams, 'United States')
 
+        self.teams = self.tournament.teams
+        self.argentina = Team.get_for_country(self.teams, 'Argentina')
 
     def test_populate(self):
         first_team = self.teams[0]
         self.assertIsNotNone(first_team.players)
         self.assertGreater(len(first_team.players), 0)
 
-        dempsey = [p for p in self.usa if p.name.lower() == 'dempsey']
-        self.assertGreater(len(dempsey), 0)
-        self.assertEqual(dempsey.age, 30)
-        self.assertEqual(dempsey.skill_rank, 85)
+        messi = [p for p in self.argentina.players if p.name.lower() == 'messi'][0]
+        self.assertEqual(messi.age, '26')
+        self.assertEqual(messi.skill_rank, '98')
 
 
 if __name__ == '__main__':

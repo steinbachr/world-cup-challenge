@@ -18,6 +18,7 @@ class TeamsPopulator():
 
     def __init__(self, tournament):
         self.tournament = tournament
+        self.tournament.teams = [] if self.tournament.teams is None else self.tournament.teams
 
     def _get_fifa_rank(self, team):
         pass
@@ -26,7 +27,7 @@ class TeamsPopulator():
         for country, group in self.teams:
             self.tournament.teams.append(Team(group=group, country=country))
 
-        PlayersPopulator.populate(self.tournament)
+        PlayersPopulator(self.tournament).populate()
 
         for team in self.tournament.teams:
             team.winning_probabilities = {}
