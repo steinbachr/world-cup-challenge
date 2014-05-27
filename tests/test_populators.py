@@ -28,11 +28,27 @@ class TestTournamentPopulator(unittest.TestCase):
         self.assertEqual(gdt.get_opponents_group_at_stage(test_team, 2), 'EFGH')
 
 
+class TestTeamPopulator(unittest.TestCase):
+    def setUp(self):
+        self.tournament = Tournament()
+        TournamentPopulator(self.tournament).populate()
+        self.teams = self.tournament.teams
+        self.argentina = Team.get_for_country(self.teams, 'Argentina')
+
+    def test_populate(self):
+        self.assertIsNotNone(self.teams)
+        self.assertGreater(len(self.teams), 0)
+        self.assertIsNotNone(self.argentina.friendly_results)
+
+        # argentina beat mexico, make sure this is apparent
+        self.assertIn(Team.get_for_country(self.teams, 'Mexico'), self.argentina.friendly_results['wins'])
+        self.assertIn(self.argentina, Team.get_for_country(self.teams, "Mexico").friendly_results['losses'])
+
+
 class TestPlayersPopulator(unittest.TestCase):
     def setUp(self):
         self.tournament = Tournament()
         TournamentPopulator(self.tournament).populate()
-
         self.teams = self.tournament.teams
         self.argentina = Team.get_for_country(self.teams, 'Argentina')
 

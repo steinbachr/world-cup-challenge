@@ -1,10 +1,11 @@
 from models.base import WCModel
 import math
 import random
+import csv
 
 
 class Player(WCModel):
-    fields = ['name', 'number', 'age', 'skill_rank', 'is_star', 'is_captain', 'is_injured']
+    fields = ['name', 'age', 'skill_rank', 'is_star', 'is_injured']
 
     def _will_be_injured(self):
         """
@@ -15,8 +16,6 @@ class Player(WCModel):
         * age
         * star rating
         * and whether they're a captain
-
-        If they have is_injured = True, then of course True will be returned
         """
         # this injury threshold is being used as it represents the injury rating of 1/2 of a non-star, 35-year old. So,
         # this means that this player would have a 50% chance at being injured, which sounds reasonable
@@ -33,87 +32,104 @@ class Player(WCModel):
 
         return self.is_injured or will_be_injured
 
-
-    def _is_clutch(self):
-        pass
-
     def overall_score(self):
         pass
 
 
 class Team(WCModel):
-    fields = ['group', 'players', 'country', 'fifa_rank', 'fans_score', 'winning_probabilities']
+    WIN, LOSS, DRAW = "win", "loss", "draw"
+    fields = ['group', 'players', 'country', 'fifa_rank', 'friendly_results', 'base_score', 'winning_probabilities',
+              'plays_up']
 
-    def _past_performances(self):
+    def _number_of_stars(self):
         """
-        :return: ``list`` of ``Game`` that this team has played in the past
+        :return: ``int`` the number of star players on this team
         """
-        pass
-
-    def _plays_better_in_bad_weather(self):
-        """
-        :return: ``True`` if this team plays better in rainy weather relative to their clear day performances.
-        (meaning they're win % is as high or higher when playing in bad weather as opposed to clear weather). If
-        they play better with good weather, return ``False``
-        """
-        pass
-
-    def _plays_better_at_night(self):
-        """
-        :return: ``True`` if this team plays better at night (defined as after 6PM) relative to their day performances.
-        (meaning they're win % is as high or higher when playing at night as opposed to during the day). If
-        they play better during the day, return ``False``
-        """
-        pass
+        return len([p for p in self.players if p.is_star])
 
     def _team_skill_score(self):
         """
-        :return: ``int`` the sum total of the skill levels of the team players divided by the scoring value for team
-        skills
+        :return: ``int`` the average skill score of the players on the team
         """
-        pass
+        return reduce(lambda x, y: x.skill_rank + y.skill_rank, self.players) / len(self.players)
 
     def _chemistry_score(self):
         """
-        :return: ``int`` > 0 the chemistry scoring value for this team, or 0 if the team has bad chemistry.
-        Determining whether the team has good chemistry follows this algorithm:
+        :return: ``float`` the calculated chemistry score for this ``Team``
 
-        1. Get the ``_team_skill_score`` for this team.
-        2. Find the overall win % of the team.
-        3. Compare the win % to the _team_skill_score. If this team has a high win % relative to its skill score, then
-        it has good chemistry. If not, then it has bad chemistry.
+        Chemistry score is calculated with the following formula:
+            100 * (x / y) where:
+            x = the # of friendly wins for this ``Team``
+            y = the _team_skill_score for this ``Team``
 
-        We are doing this qualitively rather than quantitively because it is immensely difficult to quantify a chemistry
-        value.
+        This means that a team with many wins but having a low skill score is a team with high chemistry while a team
+        with a low number of wins but high team skill score is a team with low chemistry.
         """
-        pass
+        return 100 * (len(self.friendly_results['wins']) / self._team_skill_score())
 
-    def _fans_score(self):
+    def set_plays_up(self, teams):
         """
-        :return: ``int`` > 0 the the fans scoring value for this team, or 0 if the team has bad fans.
-        Determining whether the team has good fans follows this algorithm:
+        :param teams: ``list`` of ``Team`` instances, the other teams in the WC
 
-        1. Get past results for this team
-        2. Find % of wins which came at home
-        3. Check if this % is high
+        set the plays_up attribute for this ``Team`` using the following algorithm:
+        1. Get the number of friendly wins/draws against teams with a higher base score as B
+        2. Perform (1) on all teams
+        3. This team "plays up" if B is in the 75th percentile of results
         """
-        pass
+        def get_past_played_up(team):
+            better_teams = lambda teams: [t for t in teams if t.base_score > team.base_score]
+            return len(better_teams(team.friendly_results['wins'])) + len(better_teams(team.friendly_results['draws']))
 
-    def _plays_up(self):
-        pass
+        self_play_up_results = get_past_played_up(self)
+        others_play_up_results = sorted([get_past_played_up(t) for t in teams])
+        return self_play_up_results > others_play_up_results[int(len(others_play_up_results) * .75)]
 
-    def overall_score(self):
-        pass
-
-    def probability_to_advance(self, stage):
+    def set_base_score(self):
         """
-        :param stage: ``Stage`` instance
-        :return: ``float`` the probability for this team to advance past the given ``stage``
+        the base score is the score for this ``Team`` completely independent of who they are playing. The formula
+        for determining base score is:
+        (x + 2y + z^2) - f where:
+        x = player skill score
+        y = chemistry score
+        z = the number of stars on the team
+        f = the fifa rank of this team
         """
-        if stage.is_group:
-            pass
+        return (self._team_skill_score() + (2 * self._chemistry_score()) + math.pow(self._number_of_stars(), 2)) - \
+               self.fifa_rank
+
+    def result_from_scores(self, self_score, opponent_score):
+        """
+        :param self_score: ``int`` the score of this ``Team`` in a game
+        :param opponent_score: ``int`` the score of this ``Team``'s opponent in a game
+        :return: ``str`` one of ``WIN``, ``LOSS``, or ``DRAW`` depending on whether self_score is >, <, or = to opponent
+        """
+        if self_score > opponent_score:
+            return self.WIN
+        elif self_score < opponent_score:
+            return self.LOSS
         else:
-            pass
+            return self.DRAW
+
+    def add_friendly_result(self, opponent=None, result=WIN):
+        """
+        :param opponent: ``Team`` instance that this ``Team`` played, or None if the opponent isn't part of the WC
+        :param ``result``: ``str`` the result of the friendly
+
+        add a friendly result to self.friendly_results, which is a ``dict`` containing keys ``wins``, ``draws``, and
+        ``losses``. The values are an array of ``Team`` instances which represent those teams either beat, drawn, or
+        lost to, respectively.
+        """
+        if result == self.WIN:
+            key = 'wins'
+        elif result == self.LOSS:
+            key = 'losses'
+        else:
+            key = 'draws'
+
+        try:
+            self.friendly_results.get(key, None).append(opponent)
+        except AttributeError:
+            self.friendly_results[key] = [opponent]
 
     @classmethod
     def get_for_country(cls, teams, country):

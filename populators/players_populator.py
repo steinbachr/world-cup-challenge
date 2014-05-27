@@ -55,10 +55,11 @@ class PlayersPopulator():
         teams = self.tournament.teams
         with open(self.csv_path, 'rb') as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-            for row in reader:
+            for i, row in enumerate(reader):
                 team = Team.get_for_country(teams, row[1])
                 if team:
-                    new_player = Player(name=row[0], age=row[2], skill_rank=row[3])
+                    # since the players are sorted by skill level, we say the best 50 players are stars
+                    new_player = Player(name=row[0], age=row[2], skill_rank=row[3], is_star=i < 50)
                     team.players = team.players + [new_player] if team.players is not None else [new_player]
 
         return teams
