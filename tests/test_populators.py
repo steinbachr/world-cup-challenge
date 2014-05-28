@@ -44,6 +44,11 @@ class TestTeamPopulator(unittest.TestCase):
         self.assertIn(Team.get_for_country(self.teams, 'Mexico'), self.argentina.friendly_results['wins'])
         self.assertIn(self.argentina, Team.get_for_country(self.teams, "Mexico").friendly_results['losses'])
 
+        # make sure all teams have at least one win and one loss (draws could possibly be missing)
+        for team in self.teams:
+            self.assertGreater(len(team.friendly_results.get('wins', [])), 0)
+            self.assertGreater(len(team.friendly_results.get('losses', [])), 0)
+
 
 class TestPlayersPopulator(unittest.TestCase):
     def setUp(self):

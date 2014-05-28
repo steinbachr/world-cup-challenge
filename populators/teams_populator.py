@@ -22,21 +22,10 @@ class TeamsPopulator():
         self.tournament = tournament
         self.tournament.teams = [] if self.tournament.teams is None else self.tournament.teams
 
-    def populate(self):
-        [self.tournament.teams.append(Team(group=group, country=country, fifa_rank=fifa_rank,
-                                           friendly_results={}, winning_probabilities={}))
-         for country, group, fifa_rank in self.teams]
-        PlayersPopulator(self.tournament).populate()
-
-        for team in self.tournament.teams:
-            team.set_plays_up(self.tournament.teams)
-            for other_team in self.tournament.teams:
-                # only set winning probablities against team that isn't self
-                if team.country != other_team.country:
-                    #TODO: implement the winning probability function
-                    team.winning_probabilities[other_team.country] = 1
-
-        # populate the friendly_results hash from results.csv
+    def _set_friendly_results(self):
+        """
+        populate the friendly_results hash for each team from results.csv
+        """
         with open('data/results.csv') as results_csv:
             reader = csv.reader(results_csv)
             for result in reader:
@@ -57,3 +46,27 @@ class TeamsPopulator():
                     # either the header row or the away team isn't in the tourney
                     print "error: not able to parse away team: ", result
 
+    def _set_scores_and_winning_probabilities(self):
+        """
+        set the base scores for the teams in the tournament and set their winning probabilities against each other
+        """
+        for team in self.tournament.teams:
+            team.set_base_score()
+            for other_team in self.tournament.teams:
+                # only set winning probablities against team that isn't self
+                if team.country != other_team.country:
+                    #TODO: implement the winning probability function
+                    team.winning_probabilities[other_team.country] = 1
+
+    def populate(self):
+        # instantiate each team with basic information
+        for country, group, fifa_rank in self.teams:
+            self.tournament.teams.append(Team(group=group, country=country, fifa_rank=fifa_rank, friendly_results={},
+                                              winning_probabilities={}))
+
+        PlayersPopulator(self.tournament).populate()
+        self._set_friendly_results()
+        self._set_scores_and_winning_probabilities()
+
+        # can't set the play up ability of a team until we have all the base scores for all teams
+        [t.set_plays_up(self.tournament.teams) for t in self.tournament.teams]

@@ -2,6 +2,7 @@ from models.base import WCModel
 import math
 import random
 import csv
+import pdb
 
 
 class Player(WCModel):
@@ -40,6 +41,11 @@ class Team(WCModel):
     WIN, LOSS, DRAW = "win", "loss", "draw"
     fields = ['group', 'players', 'country', 'fifa_rank', 'friendly_results', 'base_score', 'winning_probabilities',
               'plays_up']
+    # keys are the alternate spelling value is our spelling
+    alternate_spellings = {
+        'bosnia and herzegovina': 'Bosnia-Herzegovina',
+        "c\xc3\x94te d'ivoire": "Cote D'Ivoire"
+    }
 
     def _number_of_stars(self):
         """
@@ -51,7 +57,11 @@ class Team(WCModel):
         """
         :return: ``int`` the average skill score of the players on the team
         """
-        return reduce(lambda x, y: x.skill_rank + y.skill_rank, self.players) / len(self.players)
+        try:
+            return reduce(lambda x, y: x + y.skill_rank, self.players, 0) / len(self.players)
+        except ZeroDivisionError:
+            print "team {t} doesn't have any players".format(t=self.country)
+            return 0
 
     def _chemistry_score(self):
         """
@@ -65,7 +75,7 @@ class Team(WCModel):
         This means that a team with many wins but having a low skill score is a team with high chemistry while a team
         with a low number of wins but high team skill score is a team with low chemistry.
         """
-        return 100 * (len(self.friendly_results['wins']) / self._team_skill_score())
+        return 100 * (len(self.friendly_results.get('wins', [])) / self._team_skill_score())
 
     def set_plays_up(self, teams):
         """
@@ -76,12 +86,14 @@ class Team(WCModel):
         2. Perform (1) on all teams
         3. This team "plays up" if B is in the 75th percentile of results
         """
-        def get_past_played_up(team):
-            better_teams = lambda teams: [t for t in teams if t.base_score > team.base_score]
-            return len(better_teams(team.friendly_results['wins'])) + len(better_teams(team.friendly_results['draws']))
+        def num_better_teams_beaten_or_tied(team):
+            # we must check for opp is None because the friendly_results contain None entries for teams not making the WC
+            better_teams = lambda opponents: [opp for opp in opponents if opp is not None and opp.base_score > team.base_score]
+            return len(better_teams(team.friendly_results.get('wins', []))) + \
+                   len(better_teams(team.friendly_results.get('draws', [])))
 
-        self_play_up_results = get_past_played_up(self)
-        others_play_up_results = sorted([get_past_played_up(t) for t in teams])
+        self_play_up_results = num_better_teams_beaten_or_tied(self)
+        others_play_up_results = sorted([num_better_teams_beaten_or_tied(t) for t in teams])
         return self_play_up_results > others_play_up_results[int(len(others_play_up_results) * .75)]
 
     def set_base_score(self):
@@ -94,8 +106,8 @@ class Team(WCModel):
         z = the number of stars on the team
         f = the fifa rank of this team
         """
-        return (self._team_skill_score() + (2 * self._chemistry_score()) + math.pow(self._number_of_stars(), 2)) - \
-               self.fifa_rank
+        self.base_score = (self._team_skill_score() + (2 * self._chemistry_score()) +
+                           math.pow(self._number_of_stars(), 2)) - self.fifa_rank
 
     def result_from_scores(self, self_score, opponent_score):
         """
@@ -138,9 +150,14 @@ class Team(WCModel):
         :param country: ``str`` the name of a country
         :return: ``Team`` instance representing the given ``country``
         """
+        country_lowered = country.lower()
         for team in teams:
-            if team.country.lower() == country.lower():
+            if team.country.lower() == country_lowered:
                 return team
+
+        # unicode handling / alternate spelling handling
+        if country_lowered in cls.alternate_spellings.keys():
+            return cls.get_for_country(teams, cls.alternate_spellings[country_lowered])
 
         return None
 
