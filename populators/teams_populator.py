@@ -38,35 +38,49 @@ class TeamsPopulator():
                                                                                                           away_goals))
                 except AttributeError:
                     # either the header row or the away / home team isn't in the tourney
-                    print "error: not able to parse home team: ", result
+                    print "warning: not able to parse home team: ", result
                 try:
                     away_team.add_friendly_result(opponent=home_team, result=away_team.result_from_scores(away_goals,
                                                                                                           home_goals))
                 except AttributeError:
                     # either the header row or the away team isn't in the tourney
-                    print "error: not able to parse away team: ", result
+                    print "warning: not able to parse away team: ", result
 
-    def _set_scores_and_winning_probabilities(self):
+    def _set_win_probabilities(self):
         """
         set the base scores for the teams in the tournament and set their winning probabilities against each other
         """
         for team in self.tournament.teams:
-            team.set_base_score()
-            for other_team in self.tournament.teams:
+            for opponent in self.tournament.teams:
                 # only set winning probablities against team that isn't self
-                if team.country != other_team.country:
-                    #TODO: implement the winning probability function
-                    team.winning_probabilities[other_team.country] = 1
+                if team.country != opponent.country:
+                    team.set_matchup_score(opponent)
+                    team.set_win_probability(opponent)
 
     def populate(self):
-        # instantiate each team with basic information
+        """
+        the order of population for teams is important:
+        1) Instantiate basic team instances and add them to this ``Tournament``
+        2) Add the players to the teams using the ``PlayersPopulator``
+        3) Set the friendly results for all the teams
+        4) Set the basic scores for all the teams
+        5) Set the plays_up field for all teams
+        6) Set the win probabilities for teams facing each other
+        """
+        # 1
         for country, group, fifa_rank in self.teams:
-            self.tournament.teams.append(Team(group=group, country=country, fifa_rank=fifa_rank, friendly_results={},
-                                              winning_probabilities={}))
-
+            self.tournament.teams.append(Team(tournament=self.tournament, group=group, country=country,
+                                              fifa_rank=fifa_rank, players=[], friendly_results={},
+                                              winning_probabilities={}, matchup_scores={}))
+        # 2
         PlayersPopulator(self.tournament).populate()
+        # 3
         self._set_friendly_results()
-        self._set_scores_and_winning_probabilities()
-
-        # can't set the play up ability of a team until we have all the base scores for all teams
+        # 4
+        [t.set_base_score() for t in self.tournament.teams]
+        # 5
         [t.set_plays_up(self.tournament.teams) for t in self.tournament.teams]
+        # 6
+        self._set_win_probabilities()
+
+

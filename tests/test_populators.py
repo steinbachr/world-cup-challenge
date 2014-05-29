@@ -10,30 +10,17 @@ import pdb
 class TestTournamentPopulator(unittest.TestCase):
     def setUp(self):
         self.tournament = Tournament()
-        self.tournament_populator = TournamentPopulator(self.tournament)
 
     def test_populate(self):
-        self.tournament_populator.populate()
         self.assertGreater(len(self.tournament.teams), 0)
-
-    def test_get_opponents_group_at_stage(self):
-        self.tournament_populator.populate()
-        gdt = self.tournament.group_distribution_tree
-        self.assertIsNotNone(gdt)
-
-        test_team = Team.get_for_group(self.tournament.teams, 'A')[0]
-
-        self.assertEqual(gdt.get_opponents_group_at_stage(test_team, 0), 'B')
-        self.assertEqual(gdt.get_opponents_group_at_stage(test_team, 1), 'CD')
-        self.assertEqual(gdt.get_opponents_group_at_stage(test_team, 2), 'EFGH')
 
 
 class TestTeamPopulator(unittest.TestCase):
     def setUp(self):
         self.tournament = Tournament()
-        TournamentPopulator(self.tournament).populate()
         self.teams = self.tournament.teams
         self.argentina = Team.get_for_country(self.teams, 'Argentina')
+        self.cote = Team.get_for_country(self.teams, "Cote D'Ivoire")
 
     def test_populate(self):
         self.assertIsNotNone(self.teams)
@@ -44,16 +31,18 @@ class TestTeamPopulator(unittest.TestCase):
         self.assertIn(Team.get_for_country(self.teams, 'Mexico'), self.argentina.friendly_results['wins'])
         self.assertIn(self.argentina, Team.get_for_country(self.teams, "Mexico").friendly_results['losses'])
 
+        self.assertIsNotNone(self.cote.friendly_results.get('wins', None))
+        self.assertIsNotNone(self.cote.friendly_results.get('losses', None))
+
         # make sure all teams have at least one win and one loss (draws could possibly be missing)
         for team in self.teams:
-            self.assertGreater(len(team.friendly_results.get('wins', [])), 0)
-            self.assertGreater(len(team.friendly_results.get('losses', [])), 0)
+            self.assertIsNotNone(len(team.friendly_results.get('wins', None)))
+            self.assertIsNotNone(len(team.friendly_results.get('losses', None)))
 
 
 class TestPlayersPopulator(unittest.TestCase):
     def setUp(self):
         self.tournament = Tournament()
-        TournamentPopulator(self.tournament).populate()
         self.teams = self.tournament.teams
         self.argentina = Team.get_for_country(self.teams, 'Argentina')
 
@@ -64,7 +53,7 @@ class TestPlayersPopulator(unittest.TestCase):
 
         messi = [p for p in self.argentina.players if p.name.lower() == 'messi'][0]
         self.assertEqual(messi.age, '26')
-        self.assertEqual(messi.skill_rank, '98')
+        self.assertEqual(messi.skill_rank, 98)
 
 
 if __name__ == '__main__':

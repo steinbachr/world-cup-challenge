@@ -8,6 +8,7 @@ import os
 class PlayersPopulator():
     url = 'http://pesdb.net/pes2014/index.php'
     csv_path = 'data/players.csv'
+    num_players_allowed = 23
 
     def __init__(self, tournament):
         self.tournament = tournament
@@ -57,10 +58,10 @@ class PlayersPopulator():
             reader = csv.reader(csvfile, delimiter=',', quotechar='|')
             for i, row in enumerate(reader):
                 team = Team.get_for_country(teams, row[1])
-                if team:
-                    # since the players are sorted by skill level, we say the best 50 players are stars
-                    new_player = Player(name=row[0], age=row[2], skill_rank=int(row[3]), is_star=i < 50)
-                    team.players = team.players + [new_player] if team.players is not None else [new_player]
+                if team and len(team.players) <= self.num_players_allowed:
+                    # since the players are sorted by skill level, we say the best 20 players are stars
+                    new_player = Player(name=row[0], age=row[2], skill_rank=int(row[3]), is_star=i < 20)
+                    team.players.append(new_player)
 
         return teams
 

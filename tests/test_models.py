@@ -1,5 +1,6 @@
 from models.team import Team
 from models.tournament import Tournament
+from models.tree import ProbableTournamentTree
 import unittest
 
 
@@ -36,9 +37,31 @@ class TestTeam(unittest.TestCase):
         self.assertIn(Team.get_for_country(self.teams, 'Brazil'), Team.get_for_group(self.teams, 'A'))
         self.assertNotIn(Team.get_for_country(self.teams, 'Brazil'), Team.get_for_group(self.teams, 'B'))
 
-    def test_get_best_team(self):
-        self.assertEqual(Team.get_best_team(Team.get_for_group(self.teams, 'A')).country, 'Brazil')
 
+class TestTournament(unittest.TestCase):
+    def setUp(self):
+        self.tournament = Tournament()
+        self.teams = self.tournament.teams
+
+    def test_get_group_winners(self):
+        winners = self.tournament.get_group_winners('A')
+        self.assertEqual(winners[0].country, 'Brazil')
+        self.assertEqual(winners[0].country, 'Mexico')
+
+
+class TestTree(unittest.TestCase):
+    def setUp(self):
+        self.tournament = Tournament()
+        self.teams = self.tournament.teams
+        self.tree = ProbableTournamentTree(self.tournament)
+
+    def test_get_opponent_at_stage(self):
+        brazil = Team.get_for_country(self.teams, 'Brazil')
+        spain = Team.get_for_country(self.teams, 'Spain')
+        chile = Team.get_for_country(self.teams, 'Chile')
+
+        opp = self.tree.get_opponent_at_stage(brazil, 0)
+        self.assertIn(opp, [spain, chile])
 
 
 if __name__ == '__main__':
