@@ -2,6 +2,7 @@ from models.team import Team
 from models.tournament import Tournament
 from models.tree import ProbableTournamentTree
 import unittest
+import pdb
 
 
 class TestTeam(unittest.TestCase):
@@ -46,7 +47,7 @@ class TestTournament(unittest.TestCase):
     def test_get_group_winners(self):
         winners = self.tournament.get_group_winners('A')
         self.assertEqual(winners[0].country, 'Brazil')
-        self.assertEqual(winners[0].country, 'Mexico')
+        self.assertEqual(winners[1].country, 'Mexico')
 
 
 class TestTree(unittest.TestCase):
@@ -57,11 +58,26 @@ class TestTree(unittest.TestCase):
 
     def test_get_opponent_at_stage(self):
         brazil = Team.get_for_country(self.teams, 'Brazil')
+        mexico = Team.get_for_country(self.teams, 'Mexico')
+        cameroon = Team.get_for_country(self.teams, 'Cameroon')
         spain = Team.get_for_country(self.teams, 'Spain')
-        chile = Team.get_for_country(self.teams, 'Chile')
+        netherlands = Team.get_for_country(self.teams, 'Netherlands')
 
         opp = self.tree.get_opponent_at_stage(brazil, 0)
-        self.assertIn(opp, [spain, chile])
+        self.assertEqual(opp.country, netherlands.country)
+        opp = self.tree.get_opponent_at_stage(brazil, 1)
+        self.assertEqual(opp.country, Team.get_for_country(self.teams, 'Colombia').country)
+        opp = self.tree.get_opponent_at_stage(brazil, 3)
+        self.assertEqual(opp.country, spain.country)
+
+        opp = self.tree.get_opponent_at_stage(netherlands, 0)
+        self.assertEqual(opp.country, brazil.country)
+
+        opp = self.tree.get_opponent_at_stage(mexico, 0)
+        self.assertEqual(opp.country, spain.country)
+
+        # test for a team that isn't in the probability tree
+        self.assertEqual(self.tree.get_opponent_at_stage(cameroon, 0).country, self.tree.get_opponent_at_stage(mexico, 0).country)
 
 
 if __name__ == '__main__':

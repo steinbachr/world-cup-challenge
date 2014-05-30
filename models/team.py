@@ -196,11 +196,24 @@ class Team(WCModel):
         self.winning_probabilities[opponent.country] = Decimal(matchup_score) / \
                                                        Decimal((opponent_matchup_score + matchup_score))
 
-    def probability_at_stage(self, stage):
+    def knockout_probability_at_stage(self, stage, to_win=False):
         """
-        :param stage: ``int`` integer to calculate the probability to win/lose at
+        :param stage: ``int`` integer to calculate the probability to lose at
+        :param to_win: ``bool`` if True, calculate the probability to win at ``stage``. False means prob to lose.
+        :return: ``decimal`` the probability of this team to lose at ``stage``
+
+        For group, 16, 8, and 4 we want the probability that this ``Team`` will be eliminated
         """
-        pass
+        if stage == 0:
+            # TODO: probability of being knocked out in group
+            return Decimal(.5)
+        else:
+            # stage 0 in the tournament tree represents the round directly after group
+            probable_opponent = self.tournament.tree.get_opponent_at_stage(self, stage - 1)
+            winning_prob = self.winning_probabilities[probable_opponent.country]
+            prob = winning_prob if to_win else 1 - winning_prob
+
+            return prob * self.knockout_probability_at_stage(stage - 1, to_win=True)
 
     @classmethod
     def get_for_country(cls, teams, country):

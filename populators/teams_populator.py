@@ -38,13 +38,13 @@ class TeamsPopulator():
                                                                                                           away_goals))
                 except AttributeError:
                     # either the header row or the away / home team isn't in the tourney
-                    print "warning: not able to parse home team: ", result
+                    pass
                 try:
                     away_team.add_friendly_result(opponent=home_team, result=away_team.result_from_scores(away_goals,
                                                                                                           home_goals))
                 except AttributeError:
                     # either the header row or the away team isn't in the tourney
-                    print "warning: not able to parse away team: ", result
+                    pass
 
     def _set_win_probabilities(self):
         """

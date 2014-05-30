@@ -2,6 +2,7 @@ from models.base import WCModel
 from models.team import Team
 from models.tree import ProbableTournamentTree
 from populators.tournament_populator import TournamentPopulator
+from decimal import *
 import math
 import pdb
 
@@ -14,8 +15,8 @@ class Tournament(WCModel):
 
     def __init__(self):
         WCModel.__init__(self)
-        self.tree = ProbableTournamentTree(self)
         TournamentPopulator(self).populate()
+        self.tree = ProbableTournamentTree(self)
 
     def get_group_winners(self, group):
         """
@@ -42,5 +43,19 @@ class Tournament(WCModel):
         return winners[0], winners[1]
 
     def run(self):
-        pass
+        """
+        For every team in the tournament, calculate the teams probability to be knocked out.
+        """
+        for team in self.teams:
+            stages_probabilities = []
+
+            # probability knocked out in group
+            stages_probabilities.append(str(team.knockout_probability_at_stage(0)))
+            for stage in range(1, self.tree.MAX_LEVEL + 1):
+                stages_probabilities.append(str(team.knockout_probability_at_stage(stage)))
+            # probability to win
+            stages_probabilities.append(str(team.knockout_probability_at_stage(self.tree.MAX_LEVEL - 1, to_win=True)))
+
+            print "{team}\t{probabilities}\n".format(team=team.country, probabilities="\t".join(stages_probabilities))
+
 
