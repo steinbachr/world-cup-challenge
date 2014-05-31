@@ -27,19 +27,13 @@ class Tournament(WCModel):
         ``group``
         """
         group_teams = Team.get_for_group(self.teams, group)
-        group_wins = {}
+        probs_to_advance = []
 
         for team in group_teams:
-            group_wins[team.country] = 0
-            for opponent in group_teams:
-                if opponent.country != team.country:
-                    # if the team is likely to beat their opponent, increment the teams win counter
-                    if team.winning_probabilities[opponent.country] > .5:
-                        group_wins[team.country] += 1
+            prob_to_advance = team.probability_to_advance_from_group()
+            probs_to_advance.append((team, prob_to_advance))
 
-        # TODO: better sorting function which uses base team score as a tie breaker
-        winners = [Team.get_for_country(self.teams, c) for c, num_wins in
-                   sorted(group_wins.items(), key=lambda x: x[1], reverse=True)][:2]
+        winners = [team for team, prob_to_advance in sorted(probs_to_advance, key=lambda x: x[1], reverse=True)][:2]
         return winners[0], winners[1]
 
     def run(self):

@@ -196,6 +196,39 @@ class Team(WCModel):
         self.winning_probabilities[opponent.country] = Decimal(matchup_score) / \
                                                        Decimal((opponent_matchup_score + matchup_score))
 
+    def probability_to_advance_from_group(self):
+        """
+        :return: ``decimal`` the probability of this team to advance from group
+
+        The way we calculate probability to advance is partially flawed, but should still be close to accurate. We take the
+        probability that a team will win at least two games in group as their probability to advance (so 1 - this number
+        is the probability of them being knocked out)
+        """
+        def _helper(game_num=1, num_wins=0, to_win=True):
+            """
+            :param game_num: ``int`` the game in group being played
+            :param to_win: ``bool`` whether we're calculating the probability of this ``Team`` to win or lose in the ``game_num``
+            game
+            """
+            group_teams = self.get_for_group(self.tournament.teams, self.group, exclude_team=self)
+            current_matchup = group_teams[game_num - 1]
+            winning_prob = self.winning_probabilities[current_matchup.country]
+            prob = winning_prob if to_win else 1 - winning_prob
+
+            if game_num == 3:
+                #this is a path which leads to >=2 wins
+                if num_wins >= 2 or (num_wins == 1 and to_win):
+                    return prob
+                else:
+                    return Decimal(0)
+            else:
+                next_game = game_num + 1
+                num_wins = num_wins + 1 if to_win else num_wins
+                return (prob * _helper(game_num=next_game, num_wins=num_wins, to_win=False)) + \
+                       (prob * _helper(game_num=next_game, num_wins=num_wins))
+
+        return _helper() + _helper(to_win=False)
+
     def knockout_probability_at_stage(self, stage, to_win=False):
         """
         :param stage: ``int`` integer to calculate the probability to lose at
@@ -205,8 +238,7 @@ class Team(WCModel):
         For group, 16, 8, and 4 we want the probability that this ``Team`` will be eliminated
         """
         if stage == 0:
-            # TODO: probability of being knocked out in group
-            return Decimal(.5)
+            return 1 - self.probability_to_advance_from_group()
         else:
             # stage 0 in the tournament tree represents the round directly after group
             probable_opponent = self.tournament.tree.get_opponent_at_stage(self, stage - 1)
@@ -234,15 +266,17 @@ class Team(WCModel):
         return None
 
     @classmethod
-    def get_for_group(cls, teams, group):
+    def get_for_group(cls, teams, group, exclude_team=None):
         """
         :param teams: ``list`` of ``Team`` instances
         :param group: ``str`` the group letter to get team instances belonging to
+        :param exclude_team: ``Team`` instance. If given, exclude this team from the returned result
         :return: ``list`` of team instances belonging to the given group
         """
         matching_group = []
         for team in teams:
             if team.group == group:
-                matching_group.append(team)
+                if not exclude_team or exclude_team.country != team.country:
+                    matching_group.append(team)
 
         return matching_group
