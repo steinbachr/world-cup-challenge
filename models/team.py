@@ -238,7 +238,8 @@ class Team(WCModel):
         For group, 16, 8, and 4 we want the probability that this ``Team`` will be eliminated
         """
         if stage == 0:
-            return 1 - self.probability_to_advance_from_group()
+            prob_to_advance = self.probability_to_advance_from_group()
+            return prob_to_advance if to_win else 1 - prob_to_advance
         else:
             # stage 0 in the tournament tree represents the round directly after group
             probable_opponent = self.tournament.tree.get_opponent_at_stage(self, stage - 1)
